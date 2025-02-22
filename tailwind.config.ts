@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
-export default {
+const config: Config = {
+  darkMode: "class", // 🔹 Dark Mode Desteği Eklendi!
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -15,4 +16,8 @@ export default {
     },
   },
   plugins: [],
-} satisfies Config;
+};
+
+// 🔥 Sadece BİR `export default` olmalı!
+export default config;
+
