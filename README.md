@@ -1,5 +1,26 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+Real-Time Multi-Channel Chat App 🚀
+This project is a real-time, multi-channel chat application built with Next.js, TypeScript, and Upstash Redis.
+Users can create and join different chat channels, send messages instantly, switch between dark/light mode, and choose custom avatars.
+
+🛠️ Features
+✅ Real-Time Messaging - Instant chat powered by Upstash Redis.
+✅ Multi-Channel Support - Users can create, join, and manage multiple chat channels.
+✅ User Login System - Users can set their username and log in.
+✅ Custom Avatars - Choose from 14 different avatars for personalization.
+✅ Dark / Light Mode - Theme preference is saved in the browser for a personalized experience.
+✅ Easy Deployment - Ready to deploy on Vercel, Railway, or any VPS.
+✅ Automatic Channel Management - Create and delete chat channels on demand.
+
+🔧 Tech Stack
+Next.js 15 (App Router)
+TypeScript
+TailwindCSS
+Upstash Redis (Serverless database)
+LocalStorage (For storing user preferences)
+Vercel / Railway (Easy deployment options)
+
 ## Getting Started
 
 First, run the development server:
