@@ -7,6 +7,10 @@ const redis = new Redis({
 });
 
 const CHANNEL_LIST_KEY = "channels"; // Tüm kanal isimlerini tutan Redis Set key'i
+const CHAT_ADMIN_TOKEN = process.env.CHAT_ADMIN_TOKEN;
+const CHANNEL_NAME_RE = /^[a-zA-Z0-9_-]{1,32}$/;
+const MAX_USER_LENGTH = 64;
+const MAX_MESSAGE_LENGTH = 1000;
 
 /**
  * Yardımcı fonksiyon: URL parametresinden 'channel' bilgisini alır.
@@ -14,6 +18,29 @@ const CHANNEL_LIST_KEY = "channels"; // Tüm kanal isimlerini tutan Redis Set ke
 function getChannelName(url: string) {
   const urlObj = new URL(url, "http://localhost");
   return urlObj.searchParams.get("channel") || "general";
+}
+
+function isValidChannelName(channel: string) {
+  return CHANNEL_NAME_RE.test(channel);
+}
+
+function requireAdmin(req: Request) {
+  if (!CHAT_ADMIN_TOKEN) {
+    return NextResponse.json(
+      { error: "CHAT_ADMIN_TOKEN is not configured." },
+      { status: 503 }
+    );
+  }
+
+  const token = req.headers.get("x-admin-token");
+  if (token !== CHAT_ADMIN_TOKEN) {
+    return NextResponse.json(
+      { error: "Admin token is required." },
+      { status: 403 }
+    );
+  }
+
+  return null;
 }
 
 /**
@@ -33,6 +60,9 @@ export async function GET(req: Request) {
 
   // Aksi halde spesifik kanalın mesajlarını dön
   const channel = getChannelName(req.url);
+  if (!isValidChannelName(channel)) {
+    return NextResponse.json({ error: "Invalid channel name." }, { status: 400 });
+  }
   const key = `chat:${channel}`;
 
   // Son 20 mesajı (0-19) alıp, ters çeviriyoruz (en yeni mesaj en üstte olabilir)
@@ -72,6 +102,25 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!isValidChannelName(channelQuery)) {
+      return NextResponse.json(
+        { error: "Invalid channel name." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      typeof user !== "string" ||
+      typeof message !== "string" ||
+      user.length > MAX_USER_LENGTH ||
+      message.length > MAX_MESSAGE_LENGTH
+    ) {
+      return NextResponse.json(
+        { error: "Invalid message payload." },
+        { status: 400 }
+      );
+    }
+
     const key = `chat:${channelQuery}`;
     const messageObj = {
       user,
@@ -91,9 +140,14 @@ export async function POST(req: Request) {
 
   // 2) Aksi halde kanal oluşturma (channelBody varsa)
   if (channelBody) {
-    if (!channelBody.trim()) {
+    const adminError = requireAdmin(req);
+    if (adminError) {
+      return adminError;
+    }
+
+    if (!channelBody.trim() || !isValidChannelName(channelBody)) {
       return NextResponse.json(
-        { error: "Channel name is required" },
+        { error: "A valid channel name is required" },
         { status: 400 }
       );
     }
@@ -116,10 +170,21 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const url = new URL(req.url);
   const channel = url.searchParams.get("channel");
+  const adminError = requireAdmin(req);
+  if (adminError) {
+    return adminError;
+  }
 
   if (!channel) {
     return NextResponse.json(
       { error: "Channel name is required" },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidChannelName(channel)) {
+    return NextResponse.json(
+      { error: "Invalid channel name." },
       { status: 400 }
     );
   }
